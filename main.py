@@ -16,6 +16,7 @@ import eve_ESI
 import trello_discord_eve_int
 
 TRYRM_corp_id = '98250435'
+manufacturing_admin = 712327259368980480  # for discord
 
 
 def status_fabrica():
