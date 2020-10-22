@@ -1,4 +1,5 @@
 # bot.py
+import asyncio
 import codecs
 import datetime
 import os
@@ -12,6 +13,8 @@ import pythonserver
 import authpython
 import threading
 import eve_ESI
+import trello_discord_eve_int
+
 TRYRM_corp_id = '98250435'
 
 
@@ -24,10 +27,10 @@ def status_fabrica():
     a += "```"
     return a
 
-def get_refreshkey():
-    f = open("keys.key", "r")
-    refresh_key = f.read().split(" ")[1]
-    return refresh_key
+# def get_refreshkey():
+#     f = open("keys.key", "r")
+#     refresh_key = f.read().split(" ")[1]
+#     return refresh_key
 
 
 def get_accesstoken():
@@ -51,20 +54,31 @@ if __name__ == '__main__':
         api_secret=trello_token
     )
 
-    # what the fuck is going on here.
-
     if len(sys.argv) == 1:
+        # If we need to make a new api key
         a = pythonserver.run(eve_id)
     else:
-        a = authpython.refresh(eve_id, eve_secret, get_refreshkey())
-        file_1_write = open("keys.key", "w")
-        file_1_write.write("%s %s" % (a['access_token'], a['refresh_token']))
-        # file_1_write.write("%s %s" % (pw['token_id'],pw['refresh_id']))
-        file_1_write.close()
+        # if we dont need to (we made one <1200 seconds)
+        refreshed_keys = authpython.refresh(eve_id,
+                                            eve_secret,
+                                            pythonserver.get_refreshkey())
+        pythonserver.write_new_keys_file(refreshed_keys)  # todo: could be moved to authpython, under authpython.refresh
 
+    refresh_key_thread = threading.Thread(target=pythonserver.refresh_keys, args=(eve_id, eve_secret), daemon=True)
+    refresh_key_thread.start()
     reader = codecs.getreader("utf-8")
-
     client = discord.Client()
+
+
+    async def trello_status():
+        channel = client.get_channel(manufacturing_admin) # This is manufacturing-administration
+        while True:
+            for msg in trello_discord_eve_int.discord_remind_manufacture_administration(client,
+                                                                                        channel,
+                                                                                        trello_discord_eve_int.status_fabrica(
+                                                                                            trello_client)):
+                await channel.send(msg)
+            await asyncio.sleep(10)
 
 
     @client.event
@@ -79,13 +93,39 @@ if __name__ == '__main__':
             f'{guild.name}(id: {guild.id})'
         )
 
+        client.loop.create_task(trello_status())
+
+    def get_trello_jobs():
+        """
+        Gets trello jobs
+        :return:
+        """
+        return
+
+    def get_jobs_long(wp):
+        """
+
+        :param wp:
+        :return:
+        """
+        fp = json.load(reader(wp))
+        joblist = str(fp)
+        return joblist
 
     def get_jobs(wp):
-        
+        """
+
+        :param wp:
+        :return: list of jobs being run in corp
+        """
         fp = json.load(reader(wp))
         joblist = str(fp)
         joblist = (joblist[:1998] + '..') if len(joblist) > 1998 else joblist
         return joblist
+
+
+    def get_delivery_jobs():
+        pass
 
 
     @client.event
@@ -93,20 +133,26 @@ if __name__ == '__main__':
         if message.author == client.user:
             return
         if message.content == '!status_fabrica':
-            response = "Control link established with A5MT Sotiyo Control"
-            await message.channel.send(response)
-            sleep(0.5)
-            await message.channel.send('...\nEstablished! \nFURTHER INPUT REQUIRED!')
+            await message.channel.send("Control link established with A5MT Sotiyo Control")
+            await message.channel.send("Checking Trello tasks")
             try:
-                await message.channel.send('....Trello located\n{}'.format(status_fabrica()))
+                for msg in trello_discord_eve_int.discord_remind_manufacture_administration(client,
+                                                                                            message,
+                                                                                            trello_discord_eve_int.status_fabrica(trello_client)):
+                    await message.channel.send(msg)
             except exceptions.ResourceUnavailable:
                 await message.channel.send('ERROR! \nhttps://i.imgur.com/a1V5gYj.jpg ')
         if message.content == '!status_fabrica jobs':
-
-            wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(
-            TRYRM_corp_id) + "?datasource=tranquility&include_completed=false&page=1&language=en-us&token=" +
-                             get_accesstoken())
+            wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(TRYRM_corp_id) +
+                                 "?datasource=tranquility&include_completed=false&page=1&language=en-us&token=" +
+                                 get_accesstoken())
             await message.channel.send(get_jobs(wp))
+        if message.content == '!status_fabrica freight':
+            if get_delivery_jobs():
+                await message.channel.send("Oi, get that stuff shipped, @Freightering!")
+            else:
+                pass
+
             # except Exception:
                 # await message.channel.send("Beep boop, sorry you just fucked up")
                 # sleep(0.5)

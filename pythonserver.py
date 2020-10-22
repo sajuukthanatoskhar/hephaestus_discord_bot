@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import codecs
+import datetime
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 #import authpython
@@ -22,6 +24,13 @@ new_settings: {}
 
 ")
 '''
+
+def write_new_keys_file(keys_to_be_written):
+    file_1_write = open("keys.key", "w")
+    file_1_write.write("%s %s" % (keys_to_be_written['access_token'],
+                                  keys_to_be_written['refresh_token']))
+    # file_1_write.write("%s %s" % (pw['token_id'],pw['refresh_id']))
+    file_1_write.close()
 
 # HTTPRequestHandler class
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -47,12 +56,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 #token_id_var = jpw["access_token"]
                 #refresh_id_var = jpw["refresh_token"]
                 #print(pw['token_id'])
-
-
-                file_1_write = open("keys.key","w")
-                file_1_write.write("%s %s" % (pw['access_token'],pw['refresh_token']))
-                #file_1_write.write("%s %s" % (pw['token_id'],pw['refresh_id']))
-                file_1_write.close()
+                write_new_keys_file(pw)
                 countflag = 1
 
 
@@ -102,8 +106,27 @@ def run(client_id):
     server_address = (ip, port)
     httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
     print('running server...')
-    while count>0:
+    while count > 0:
         httpd.handle_request()
         count = count - 1
         print("Request handled")
 
+def get_refreshkey():
+    f = open("keys.key", "r")
+    refresh_key = f.read().split(" ")[1]
+    return refresh_key
+
+def refresh_keys(eve_id, eve_secret):
+    '''
+    Only to be used on a seperate thread.
+    :param eve_id:
+    :param eve_secret:
+    :param refresh_key:
+    :return:
+    '''
+    while(True):
+        refreshed_keys = authpython.refresh(eve_id,
+                                            eve_secret,
+                                            get_refreshkey())
+        write_new_keys_file(refreshed_keys)
+        time.sleep(1000)
