@@ -34,10 +34,7 @@ def status_fabrica():
 #     return refresh_key
 
 
-def get_accesstoken():
-    f = open("keys.key", "r")
-    accesstoken = f.read().split(" ")[0]
-    return accesstoken
+
 
 
 if __name__ == '__main__':
@@ -144,9 +141,9 @@ if __name__ == '__main__':
             except exceptions.ResourceUnavailable:
                 await message.channel.send('ERROR! \nhttps://i.imgur.com/a1V5gYj.jpg ')
         if message.content == '!status_fabrica jobs':
-            wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(TRYRM_corp_id) +
+            wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(corp_id) +
                                  "?datasource=tranquility&include_completed=false&page=1&language=en-us&token=" +
-                                 get_accesstoken())
+                                 authpython.get_accesstoken())
             await message.channel.send(get_jobs(wp))
         if message.content == '!status_fabrica freight':
             if get_delivery_jobs():

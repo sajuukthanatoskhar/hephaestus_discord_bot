@@ -50,6 +50,10 @@ def verify(access_token, token_type):
     r = re.get(verify_url, headers={'Authorization': '{} {}'.format(token_type, access_token)})
     return r.json()
 
+def get_accesstoken():
+    f = open("keys.key", "r")
+    accesstoken = f.read().split(" ")[0]
+    return accesstoken
 
 def refresh(CLIENT_ID, CLIENT_SECRET, refresh_token):
     """
