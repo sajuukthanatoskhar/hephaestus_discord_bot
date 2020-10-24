@@ -79,7 +79,7 @@ if __name__ == '__main__':
                                                                                         trello_discord_eve_int.status_fabrica(
                                                                                             trello_client)):
                 await channel.send(msg)
-            await asyncio.sleep(10)
+            await asyncio.sleep(21600)
 
 
     @client.event
