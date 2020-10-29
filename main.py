@@ -15,9 +15,17 @@ import threading
 import eve_ESI
 import trello_discord_eve_int
 
+# todo: Fix this and put it in env
+corp_Trello_board_id = "54eedff17c7956435a32dc06"
+
 TRYRM_corp_id = '98250435'
 manufacturing_admin = 712327259368980480  # for discord
+A5MT_sotiyo = 1028387211434 # sotiyo in a5mt (for build jobs)
+A5MT_sotiyo_buildhangar = 1028424848158 # Sotiyo in A5MT
+D_P_Pyongyang = 1024956767814 # Keepstar in D-PNP9
+# A5MT_Tatara =
 
+location_id_filter_list = [A5MT_sotiyo, D_P_Pyongyang]  # Expand as needed
 
 def status_fabrica():
     a = "```List\t\t\t\t\t\t\t\t\t\t\t\tNumber of cards\n"
@@ -71,12 +79,13 @@ if __name__ == '__main__':
     async def trello_status():
         channel = client.get_channel(manufacturing_admin) # This is manufacturing-administration
         while True:
+            await asyncio.sleep(21600)
             for msg in trello_discord_eve_int.discord_remind_manufacture_administration(client,
                                                                                         channel,
                                                                                         trello_discord_eve_int.status_fabrica(
                                                                                             trello_client)):
                 await channel.send(msg)
-            await asyncio.sleep(21600)
+
 
 
     @client.event
@@ -140,16 +149,19 @@ if __name__ == '__main__':
                     await message.channel.send(msg)
             except exceptions.ResourceUnavailable:
                 await message.channel.send('ERROR! \nhttps://i.imgur.com/a1V5gYj.jpg ')
-        if message.content == '!status_fabrica jobs':
-            wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(corp_id) +
-                                 "?datasource=tranquility&include_completed=false&page=1&language=en-us&token=" +
-                                 authpython.get_accesstoken())
-            await message.channel.send(get_jobs(wp))
+        # if message.content == '!status_fabrica jobs':
+        #     wp = eve_ESI.req_esi("corporations/{}/industry/jobs/".format(corp_id) +
+        #                          "?datasource=tranquility&include_completed=false&page=1&language=en-us&token=" +
+        #                          authpython.get_accesstoken())
+        #     await message.channel.send(get_jobs(wp))
         if message.content == '!status_fabrica freight':
             if get_delivery_jobs():
                 await message.channel.send("Oi, get that stuff shipped, @Freightering!")
             else:
                 pass
+        if message.content == '!card_cleanup':
+            pass
+
 
             # except Exception:
                 # await message.channel.send("Beep boop, sorry you just fucked up")
