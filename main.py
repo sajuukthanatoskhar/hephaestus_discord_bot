@@ -23,9 +23,10 @@ manufacturing_admin = 712327259368980480  # for discord
 A5MT_sotiyo = 1028387211434 # sotiyo in a5mt (for build jobs)
 A5MT_sotiyo_buildhangar = 1028424848158 # Sotiyo in A5MT
 D_P_Pyongyang = 1024956767814 # Keepstar in D-PNP9
+D_P_Keepstar = 1024004680659
 # A5MT_Tatara =
 
-location_id_filter_list = [A5MT_sotiyo, D_P_Pyongyang]  # Expand as needed
+location_id_filter_list = [A5MT_sotiyo, D_P_Pyongyang, A5MT_sotiyo_buildhangar, D_P_Keepstar]  # Expand as needed
 
 def status_fabrica():
     a = "```List\t\t\t\t\t\t\t\t\t\t\t\tNumber of cards\n"
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     async def trello_status():
         channel = client.get_channel(manufacturing_admin) # This is manufacturing-administration
         while True:
-            await asyncio.sleep(21600)
+            await asyncio.sleep(86400)
             for msg in trello_discord_eve_int.discord_remind_manufacture_administration(client,
                                                                                         channel,
                                                                                         trello_discord_eve_int.status_fabrica(
@@ -102,37 +103,6 @@ if __name__ == '__main__':
 
         client.loop.create_task(trello_status())
 
-    def get_trello_jobs():
-        """
-        Gets trello jobs
-        :return:
-        """
-        return
-
-    def get_jobs_long(wp):
-        """
-
-        :param wp:
-        :return:
-        """
-        fp = json.load(reader(wp))
-        joblist = str(fp)
-        return joblist
-
-    def get_jobs(wp):
-        """
-
-        :param wp:
-        :return: list of jobs being run in corp
-        """
-        fp = json.load(reader(wp))
-        joblist = str(fp)
-        joblist = (joblist[:1998] + '..') if len(joblist) > 1998 else joblist
-        return joblist
-
-
-    def get_delivery_jobs():
-        pass
 
 
     @client.event
@@ -155,12 +125,9 @@ if __name__ == '__main__':
         #                          authpython.get_accesstoken())
         #     await message.channel.send(get_jobs(wp))
         if message.content == '!status_fabrica freight':
-            if get_delivery_jobs():
-                await message.channel.send("Oi, get that stuff shipped, @Freightering!")
-            else:
                 pass
-        if message.content == '!card_cleanup':
-            pass
+        if message.content == '!check_cards':
+            trello_discord_eve_int.process_cards(trello_client, corp_id=TRYRM_corp_id, location_id_filter_list=location_id_filter_list)
 
 
             # except Exception:

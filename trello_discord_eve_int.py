@@ -22,18 +22,6 @@ trello_responsible_group = {
     "Shipping": "Freightering"
 }
 
-def get_trello_jobs() -> list:
-    '''
-    Gets the
-    :return: list
-    '''
-    joblist = []
-
-    # todo: get list
-
-    return joblist
-
-
 def status_fabrica(trello_client: trello.TrelloClient) -> dict:
     '''
 
@@ -106,7 +94,7 @@ def read_trello_card(trello_card: trello.Card) -> (str, int):
     itemname = ""
     for parts in range(no_parts-1):
         itemname = "{} {}".format(itemname, trello_card.name.split(' ')[parts])
-    itemname.lstrip(" ")
+    itemname = itemname.lstrip()
     return itemname, qty
 
 
@@ -125,17 +113,18 @@ def check_enough_manufactured_supplies_for_item(trello_card: trello.Card,
     jobs_list = []
 
     for location_id_filter in location_id_filter_list:
-        assets_list.append(eve_get_assets(corp_id, location_id_filter))
+        assets_list.extend(eve_get_assets(corp_id, location_id_filter))
 
     for line in assets_list:
-        if type_id in line["type_id"]:
-            producedqty += line["type_id"]
+        if not line:
+            continue
+        if int(type_id) == line["type_id"]:
+            producedqty += line["quantity"]
 
     sci_job_qty = check_sci_jobs_qty(trello_card, corp_id)
 
-    if producedqty >= (qty + sci_job_qty):
-        return True
-    return False
+    return (producedqty + sci_job_qty) > qty
+
 
 def check_sci_jobs_qty(trellocard: trello.Card, corp_id: str) -> int:
     """
@@ -149,7 +138,7 @@ def check_sci_jobs_qty(trellocard: trello.Card, corp_id: str) -> int:
     type_id = eve_ESI.get_typeid(item_name)
     produced_qty = 0
     for line in scijoblist:
-        if type_id in line['product_type_id'] and line['activity_id'] == eve_ESI.job_types.index("Manufacturing"):
+        if int(type_id) == line['product_type_id'] and line['activity_id'] == eve_ESI.job_types.index("Manufacturing"):
             produced_qty += line['runs']
     return int(produced_qty)
 
@@ -193,15 +182,18 @@ def process_cards(trello_client: trello.TrelloClient, corp_id, location_id_filte
 
             next_stage = get_list_id_by_name(boardjson, 'Manufacturing Complete')  # todo:  have a state dictionary containing what a) next list for a card and b) what the trigger label will be
             finished_label = get_label_by_name(board_labels, "Completed")
+
             for card in trello_lists.list_cards("open"):
+                for labels in board_labels:
+                    card.remove_label(labels)
                 if check_enough_manufactured_supplies_for_item(card, corp_id, location_id_filter_list):
                     # card.change_list(next_stage)
                     for labels in board_labels:
                         card.remove_label(labels)
                     card.add_label(finished_label)
+                    card.change_list(next_stage)
                 else:
                     try:
-                        card.remove_label(card.labels, get_label_by_name("Under Construction"))
                         card.add_label(get_label_by_name(board_labels, "Under Construction!"))
                         card.add_label(get_label_by_name(board_labels, "Ongoing"))
                     except trello.exceptions.ResourceUnavailable as e:

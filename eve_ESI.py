@@ -1,4 +1,5 @@
 import codecs
+import sqlite3
 import urllib.request
 import json
 
@@ -6,15 +7,32 @@ import authpython
 
 job_types = [
     'Something 0',
-    'Invention',
+    'Manufacturing',
+
     'Something 2',
     'Something 3',
     'Material Efficiency',
     'Something 5',
     'Something 6',
     'Something 7',
-    'Manufacturing']
+    'Invention']
 
+def load_evedb(eve_db_file):
+    '''
+    One time run function
+    :param eve_db_file:
+    :return:
+    '''
+    conn = sqlite3.connect(eve_db_file)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM invtypes")
+    rows = cur.fetchall()
+    file_write = codecs.open("eve_inv_types.etf", "w", "utf-8")
+    for row in rows:
+        outputfromsqlite = str(row[0]) + " " + str(row[1])
+        print(outputfromsqlite)
+        file_write.write(str(outputfromsqlite) + "\n")
+    file_write.close()
 
 
 def req_fuzzwork(request):
