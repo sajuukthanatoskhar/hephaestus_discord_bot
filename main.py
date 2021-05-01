@@ -76,7 +76,6 @@ if __name__ == '__main__':
     reader = codecs.getreader("utf-8")
     client = discord.Client()
 
-
     async def trello_status():
         channel = client.get_channel(manufacturing_admin) # This is manufacturing-administration
         while True:
@@ -109,6 +108,8 @@ if __name__ == '__main__':
     async def on_message(message):
         if message.author == client.user:
             return
+        if message.content == '!help':
+            await message.channel.send("Commands Available...\n!status_fabrica --> For status check of trello cards\n!status_fabrica freight --> Does nothing\n!check-cards --> Checks and processes Trello cards")
         if message.content == '!status_fabrica':
             await message.channel.send("Control link established with A5MT Sotiyo Control")
             await message.channel.send("Checking Trello tasks")

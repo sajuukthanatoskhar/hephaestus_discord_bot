@@ -22,6 +22,9 @@ trello_responsible_group = {
     "Shipping": "Freightering"
 }
 
+available_commands = {}
+
+
 def status_fabrica(trello_client: trello.TrelloClient) -> dict:
     '''
 
